@@ -336,6 +336,49 @@ h3 {
   transform: rotate(2deg);
 }
 
+.photo-collage {
+  position: absolute;
+  inset: 78px 9% 34px;
+}
+
+.hero-photo {
+  position: absolute;
+  margin: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 2px solid var(--color-dark);
+  box-shadow: 10px 10px 0 rgba(52, 64, 87, 0.28);
+}
+
+.hero-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-photo-main {
+  inset: 38px 20% 34px 0;
+  border-radius: 34px;
+  transform: rotate(-3deg);
+}
+
+.hero-photo-small {
+  right: 0;
+  width: 38%;
+  height: 34%;
+  border-radius: 26px;
+}
+
+.hero-photo-small.top {
+  top: 0;
+  transform: rotate(4deg);
+}
+
+.hero-photo-small.bottom {
+  bottom: 0;
+  transform: rotate(-4deg);
+}
+
 .printer-card {
   position: absolute;
   inset: 92px 13% auto;
@@ -677,6 +720,17 @@ h3 {
   grid-column: span 2;
 }
 
+.gallery-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 240ms ease;
+}
+
+.gallery-card:hover img {
+  transform: scale(1.04);
+}
+
 .gallery-visual {
   position: absolute;
   inset: 0;
@@ -946,6 +1000,25 @@ h3 {
     inset: 36px 4% 18px;
     border-radius: 34px;
     box-shadow: 10px 10px 0 var(--color-dark);
+  }
+
+  .photo-collage {
+    inset: 68px 6% 42px;
+  }
+
+  .hero-photo {
+    box-shadow: 6px 6px 0 rgba(52, 64, 87, 0.3);
+  }
+
+  .hero-photo-main {
+    inset: 34px 16% 34px 0;
+    border-radius: 24px;
+  }
+
+  .hero-photo-small {
+    width: 36%;
+    height: 30%;
+    border-radius: 20px;
   }
 
   .printer-card {
