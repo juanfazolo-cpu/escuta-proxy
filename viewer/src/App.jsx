@@ -91,7 +91,7 @@ export default function App() {
   const [view, setView] = useState('dashboard');
 
   useEffect(() => {
-    fetch('/taldo_gestao_v7.3.xlsx')
+    fetch(`${import.meta.env.BASE_URL}taldo_gestao_v7.3.xlsx`)
       .then((r) => {
         if (!r.ok) throw new Error('Planilha não encontrada');
         return r.arrayBuffer();
