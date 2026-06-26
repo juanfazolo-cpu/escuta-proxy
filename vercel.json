@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "chmod +x build.sh && ./build.sh",
+  "outputDirectory": "deploy",
+  "framework": null,
+  "rewrites": [
+    { "source": "/gestao", "destination": "/gestao/index.html" },
+    { "source": "/gestao/", "destination": "/gestao/index.html" },
+    { "source": "/gestao/((?!.*\\.).*)", "destination": "/gestao/index.html" }
+  ]
+}
