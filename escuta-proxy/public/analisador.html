@@ -131,7 +131,7 @@
         <button type="button" class="btn btn-ghost" id="add">+ Campanha</button>
       </div>
       <div id="p-csv" class="panel">
-        <p class="hint">Google Ads → Campanhas → ícone de colunas → Custo, Impressões, Cliques, Conversões → Download → copie e cole aqui.</p>
+        <p class="hint">Google Ads → Campanhas → ícone de colunas → marque <strong>Campanha, Custo, Impressões, Cliques, Conversões</strong> → Download → abra o arquivo → Ctrl+A → Ctrl+C → cole aqui. Depois clique <strong>Analisar campanhas</strong> (não precisa clicar Importar).</p>
         <textarea id="csv" placeholder="Campanha, Custo, Impressões, Cliques, Conversões..."></textarea>
         <button type="button" class="btn btn-ghost" id="import">Importar</button>
       </div>
@@ -195,56 +195,143 @@
 
     document.getElementById('add').onclick = add;
 
-    const MAP = {
-      nome: ['campanha', 'campaign'],
-      spend: ['custo', 'cost', 'gasto'],
-      impressions: ['impress', 'impr'],
-      clicks: ['clique', 'click'],
-      conversions: ['convers', 'conv', 'resultado'],
-      revenue: ['receita', 'revenue', 'valor de conv'],
-      impressionShare: ['parcela', 'impression share', 'impr. share'],
-    };
+    const MAP_ORDER = [
+      ['nome', ['nome da campanha', 'campaign name', 'campanha', 'campaign']],
+      ['impressionShare', ['parcela de impr', 'impression share', 'search impr', 'parcela impr']],
+      ['conversions', ['conversoes', 'conversões', 'conversions', 'todas as conv', 'all conv']],
+      ['revenue', ['valor de conv', 'conversion value', 'receita', 'revenue']],
+      ['spend', ['custo', 'cost', 'valor gasto', 'amount spent']],
+      ['impressions', ['impressoes', 'impressões', 'impressions']],
+      ['clicks', ['cliques', 'clicks', 'cliques no link']],
+      ['tipo', ['tipo de campanha', 'campaign type', 'tipo']],
+    ];
 
-    function mapCol(h) {
-      const x = h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      for (const [f, keys] of Object.entries(MAP)) {
-        if (keys.some((k) => x.includes(k))) return f;
+    function normHeader(h) {
+      return h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    }
+
+    function mapCol(header) {
+      const x = normHeader(header);
+      if (!x || x === 'total' || x.startsWith('total ')) return null;
+      // CPA — não confundir com conversões nem custo total
+      if ((x.includes('custo') && x.includes('conv')) || x.includes('custo/conv') || x === 'cpa') return null;
+      for (const [field, keys] of MAP_ORDER) {
+        if (keys.some((k) => x === k || x.startsWith(k + ' ') || x.endsWith(' ' + k) || x.includes(k))) {
+          return field;
+        }
       }
       return null;
     }
 
-    document.getElementById('import').onclick = () => {
-      const lines = document.getElementById('csv').value.trim().split(/\r?\n/).filter(Boolean);
-      if (lines.length < 2) return showErr('Cole o CSV com cabeçalho e pelo menos 1 linha.');
-      const sep = lines[0].includes(';') ? ';' : ',';
-      const heads = lines[0].split(sep).map((h) => h.replace(/"/g, '').trim());
+    function detectSep(line) {
+      if (line.includes('\t')) return '\t';
+      if (line.includes(';')) return ';';
+      return ',';
+    }
+
+    function splitLine(line, sep) {
+      if (sep !== ',') return line.split(sep).map((c) => c.trim());
+      const out = [];
+      let cur = '';
+      let q = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') { q = !q; continue; }
+        if (ch === ',' && !q) { out.push(cur.trim()); cur = ''; continue; }
+        cur += ch;
+      }
+      out.push(cur.trim());
+      return out;
+    }
+
+    function parseCsvText(text) {
+      const raw = text.replace(/^\uFEFF/, '').trim();
+      if (!raw) return [];
+
+      const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      if (lines.length < 2) throw new Error('Precisa do cabeçalho + pelo menos 1 linha de campanha.');
+
+      const sep = detectSep(lines[0]);
+      const heads = splitLine(lines[0], sep).map((h) => h.replace(/^"|"$/g, '').trim());
       const fields = heads.map(mapCol);
+
+      if (!fields.some((f) => f === 'nome' || f === 'spend' || f === 'clicks')) {
+        throw new Error(
+          'Não reconheci as colunas. O cabeçalho precisa ter algo como: Campanha, Custo, Impressões, Cliques, Conversões. Colunas encontradas: ' +
+          heads.slice(0, 6).join(' | ')
+        );
+      }
+
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = splitLine(lines[i], sep).map((c) => c.replace(/^"|"$/g, '').trim());
+        const first = normHeader(cols[0] || '');
+        if (!first || first === 'total' || first.startsWith('total') || first === '--') continue;
+
+        const row = { tipo: 'search' };
+        fields.forEach((f, j) => {
+          if (f && cols[j] !== undefined && cols[j] !== '') row[f] = cols[j];
+        });
+
+        const hasData = row.nome || row.spend || row.clicks || row.impressions || row.conversions;
+        if (hasData) rows.push(row);
+      }
+
+      if (!rows.length) throw new Error('Nenhuma campanha válida encontrada. Confira se copiou as linhas de campanha (não só o cabeçalho).');
+      return rows;
+    }
+
+    function fillCampaigns(rows) {
       lista.innerHTML = '';
       n = 0;
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(sep).map((c) => c.replace(/"/g, '').trim());
+      rows.forEach((row) => {
         add();
         const block = lista.lastElementChild;
-        fields.forEach((f, j) => {
-          if (!f || cols[j] === undefined) return;
+        Object.entries(row).forEach(([f, val]) => {
           const el = block.querySelector(`[data-f="${f}"]`);
-          if (el) el.value = cols[j];
+          if (!el) return;
+          if (el.tagName === 'SELECT') {
+            const v = String(val).toLowerCase();
+            if (v.includes('performance') || v.includes('pmax')) el.value = 'pmax';
+            else if (v.includes('display')) el.value = 'display';
+            else if (v.includes('youtube') || v.includes('video')) el.value = 'youtube';
+            else if (v.includes('pesquisa') || v.includes('search')) el.value = 'search';
+            else el.value = 'outros';
+          } else {
+            el.value = val;
+          }
         });
+      });
+    }
+
+    document.getElementById('import').onclick = () => {
+      try {
+        const rows = parseCsvText(document.getElementById('csv').value);
+        fillCampaigns(rows);
+        document.querySelector('[data-tab="manual"]').click();
+        hideErr();
+        showErr('Importado: ' + rows.length + ' campanha(s). Agora clique em Analisar campanhas.');
+        document.getElementById('err').style.background = '#0d2a1a';
+        document.getElementById('err').style.borderColor = '#1a6640';
+        document.getElementById('err').style.color = '#00ba7c';
+      } catch (e) {
+        document.getElementById('err').style.background = '#2a1515';
+        document.getElementById('err').style.borderColor = '#662222';
+        document.getElementById('err').style.color = '#ff8a8a';
+        showErr(e.message);
       }
-      document.querySelector('[data-tab="manual"]').click();
-      hideErr();
     };
 
     function collect() {
       return [...document.querySelectorAll('.camp')].map((b) => {
-        const g = (f) => b.querySelector(`[data-f="${f}"]`)?.value || '';
+        const g = (f) => b.querySelector(`[data-f="${f}"]`)?.value?.trim() || '';
         return {
           nome: g('nome'), tipo: g('tipo') || 'search',
           spend: g('spend'), impressions: g('impressions'),
           clicks: g('clicks'), conversions: g('conversions'),
           revenue: g('revenue'), impressionShare: g('impressionShare'),
         };
-      }).filter((c) => c.nome || c.spend || c.clicks);
+      }).filter((c) => c.nome || c.spend || c.clicks || c.impressions || c.conversions);
     }
 
     function badgeClass(v) {
@@ -275,8 +362,25 @@
 
     document.getElementById('go').onclick = async () => {
       hideErr();
+      document.getElementById('err').style.background = '#2a1515';
+      document.getElementById('err').style.borderColor = '#662222';
+      document.getElementById('err').style.color = '#ff8a8a';
+
+      const csvText = document.getElementById('csv').value.trim();
+      if (csvText) {
+        try {
+          fillCampaigns(parseCsvText(csvText));
+        } catch (e) {
+          return showErr(e.message);
+        }
+      }
+
       const campaigns = collect();
-      if (!campaigns.length) return showErr('Adicione pelo menos uma campanha com dados.');
+      if (!campaigns.length) {
+        return showErr(
+          'Nenhuma campanha com dados. Cole o relatório na aba "Colar do Google Ads" e clique Analisar — ou preencha os campos manualmente (nome, custo ou cliques).'
+        );
+      }
       const btn = document.getElementById('go');
       btn.disabled = true;
       btn.textContent = 'Analisando…';
