@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analisador Google Ads</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f1419;
+      color: #e7e9ea;
+      line-height: 1.5;
+      padding: 1.5rem 1rem 3rem;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin-bottom: 0.35rem; }
+    .sub { color: #71767b; font-size: 0.95rem; margin-bottom: 1.5rem; }
+    .card {
+      background: #16181c;
+      border: 1px solid #2f3336;
+      border-radius: 12px;
+      padding: 1.1rem;
+      margin-bottom: 1rem;
+    }
+    .card h2 { font-size: 0.8rem; color: #71767b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    label { display: block; font-size: 0.85rem; color: #71767b; margin-bottom: 0.3rem; }
+    input, select, textarea {
+      width: 100%;
+      background: #0f1419;
+      border: 1px solid #2f3336;
+      color: #e7e9ea;
+      border-radius: 8px;
+      padding: 0.6rem 0.7rem;
+      font: inherit;
+      margin-bottom: 0.75rem;
+    }
+    textarea { min-height: 100px; font-size: 0.8rem; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+    .btn {
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      padding: 0.85rem;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      background: #1d9bf0;
+      color: #fff;
+    }
+    .btn:disabled { opacity: 0.5; cursor: wait; }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid #2f3336;
+      color: #e7e9ea;
+      margin-bottom: 0.5rem;
+    }
+    .hint { font-size: 0.78rem; color: #71767b; margin: -0.4rem 0 0.75rem; }
+    .camp { border: 1px dashed #2f3336; border-radius: 8px; padding: 0.85rem; margin-bottom: 0.6rem; position: relative; }
+    .camp h3 { font-size: 0.9rem; margin-bottom: 0.6rem; color: #1d9bf0; }
+    .x { position: absolute; top: 0.5rem; right: 0.6rem; background: none; border: none; color: #71767b; cursor: pointer; font-size: 1.2rem; }
+    .error { background: #2a1515; border: 1px solid #662222; color: #ff8a8a; padding: 0.75rem; border-radius: 8px; margin-top: 0.75rem; font-size: 0.9rem; }
+    #out { display: none; }
+    #out.show { display: block; }
+    .score { font-size: 2.5rem; font-weight: 700; color: #1d9bf0; }
+    .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.4rem;
+    }
+    .b-escalar { background: #0d2a1a; color: #00ba7c; }
+    .b-otimizar { background: #2a220d; color: #ffd400; }
+    .b-pausar { background: #2a1515; color: #f4212e; }
+    .b-manter { background: #1a2030; color: #1d9bf0; }
+    .b-aguardar { background: #222; color: #71767b; }
+    ul { padding-left: 1.1rem; }
+    li { margin-bottom: 0.35rem; font-size: 0.92rem; }
+    .sec { margin-top: 1rem; }
+    .sec h3 { font-size: 0.95rem; margin-bottom: 0.4rem; }
+    .ok h3 { color: #00ba7c; }
+    .warn h3 { color: #ffd400; }
+    .stop h3 { color: #f4212e; }
+    .tabs { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; }
+    .tab { flex: 1; padding: 0.5rem; border: 1px solid #2f3336; background: transparent; color: #71767b; border-radius: 6px; cursor: pointer; }
+    .tab.on { border-color: #1d9bf0; color: #1d9bf0; }
+    .panel { display: none; }
+    .panel.on { display: block; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Analisador Google Ads</h1>
+    <p class="sub">Cole os dados das campanhas e receba o que melhorar, o que manter e o que não mexer ainda.</p>
+
+    <div class="card">
+      <h2>1 — Seu objetivo</h2>
+      <label>Objetivo principal</label>
+      <select id="objetivo">
+        <option value="leads">Gerar leads</option>
+        <option value="vendas">Vendas / ROAS</option>
+        <option value="conversoes">Conversões no site</option>
+        <option value="trafego">Tráfego qualificado</option>
+        <option value="reconhecimento">Reconhecimento de marca</option>
+      </select>
+      <div class="row">
+        <div>
+          <label>Período</label>
+          <input id="periodo" placeholder="ex: últimos 30 dias" />
+        </div>
+        <div>
+          <label>Seu nicho</label>
+          <input id="nicho" placeholder="ex: clínica, SaaS, loja" />
+        </div>
+      </div>
+      <label>Contexto (opcional)</label>
+      <input id="contexto" placeholder="ex: LP nova, orçamento R$ 50/dia, Maximize Conversions" />
+    </div>
+
+    <div class="card">
+      <h2>2 — Dados das campanhas</h2>
+      <div class="tabs">
+        <button type="button" class="tab on" data-tab="manual">Preencher</button>
+        <button type="button" class="tab" data-tab="csv">Colar do Google Ads</button>
+      </div>
+      <div id="p-manual" class="panel on">
+        <div id="lista"></div>
+        <button type="button" class="btn btn-ghost" id="add">+ Campanha</button>
+      </div>
+      <div id="p-csv" class="panel">
+        <p class="hint">Google Ads → Campanhas → ícone de colunas → Custo, Impressões, Cliques, Conversões → Download → copie e cole aqui.</p>
+        <textarea id="csv" placeholder="Campanha, Custo, Impressões, Cliques, Conversões..."></textarea>
+        <button type="button" class="btn btn-ghost" id="import">Importar</button>
+      </div>
+    </div>
+
+    <button type="button" class="btn" id="go">Analisar campanhas</button>
+    <div id="err" class="error" style="display:none"></div>
+
+    <div id="out" class="card">
+      <h2>Resultado</h2>
+      <div id="body"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = '/api/analisador';
+    let n = 0;
+    const lista = document.getElementById('lista');
+
+    function tpl(id) {
+      return `<div class="camp" data-id="${id}">
+        <button type="button" class="x" onclick="rm(${id})">×</button>
+        <h3>Campanha ${id}</h3>
+        <label>Nome</label>
+        <input data-f="nome" placeholder="Nome da campanha" />
+        <label>Tipo</label>
+        <select data-f="tipo">
+          <option value="search">Pesquisa</option>
+          <option value="pmax">Performance Max</option>
+          <option value="display">Display</option>
+          <option value="youtube">YouTube</option>
+          <option value="outros">Outro</option>
+        </select>
+        <div class="row">
+          <div><label>Custo (R$)</label><input data-f="spend" placeholder="500" /></div>
+          <div><label>Impressões</label><input data-f="impressions" placeholder="10000" /></div>
+        </div>
+        <div class="row">
+          <div><label>Cliques</label><input data-f="clicks" placeholder="300" /></div>
+          <div><label>Conversões</label><input data-f="conversions" placeholder="12" /></div>
+        </div>
+        <div class="row">
+          <div><label>Receita (R$) — opcional</label><input data-f="revenue" placeholder="ROAS" /></div>
+          <div><label>Parcela impr. % — opcional</label><input data-f="impressionShare" placeholder="55%" /></div>
+        </div>
+      </div>`;
+    }
+
+    function add() { n++; lista.insertAdjacentHTML('beforeend', tpl(n)); }
+    window.rm = (id) => document.querySelector(`.camp[data-id="${id}"]`)?.remove();
+    add();
+
+    document.querySelectorAll('.tab').forEach((t) => {
+      t.onclick = () => {
+        document.querySelectorAll('.tab').forEach((x) => x.classList.remove('on'));
+        document.querySelectorAll('.panel').forEach((x) => x.classList.remove('on'));
+        t.classList.add('on');
+        document.getElementById('p-' + t.dataset.tab).classList.add('on');
+      };
+    });
+
+    document.getElementById('add').onclick = add;
+
+    const MAP = {
+      nome: ['campanha', 'campaign'],
+      spend: ['custo', 'cost', 'gasto'],
+      impressions: ['impress', 'impr'],
+      clicks: ['clique', 'click'],
+      conversions: ['convers', 'conv', 'resultado'],
+      revenue: ['receita', 'revenue', 'valor de conv'],
+      impressionShare: ['parcela', 'impression share', 'impr. share'],
+    };
+
+    function mapCol(h) {
+      const x = h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      for (const [f, keys] of Object.entries(MAP)) {
+        if (keys.some((k) => x.includes(k))) return f;
+      }
+      return null;
+    }
+
+    document.getElementById('import').onclick = () => {
+      const lines = document.getElementById('csv').value.trim().split(/\r?\n/).filter(Boolean);
+      if (lines.length < 2) return showErr('Cole o CSV com cabeçalho e pelo menos 1 linha.');
+      const sep = lines[0].includes(';') ? ';' : ',';
+      const heads = lines[0].split(sep).map((h) => h.replace(/"/g, '').trim());
+      const fields = heads.map(mapCol);
+      lista.innerHTML = '';
+      n = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(sep).map((c) => c.replace(/"/g, '').trim());
+        add();
+        const block = lista.lastElementChild;
+        fields.forEach((f, j) => {
+          if (!f || cols[j] === undefined) return;
+          const el = block.querySelector(`[data-f="${f}"]`);
+          if (el) el.value = cols[j];
+        });
+      }
+      document.querySelector('[data-tab="manual"]').click();
+      hideErr();
+    };
+
+    function collect() {
+      return [...document.querySelectorAll('.camp')].map((b) => {
+        const g = (f) => b.querySelector(`[data-f="${f}"]`)?.value || '';
+        return {
+          nome: g('nome'), tipo: g('tipo') || 'search',
+          spend: g('spend'), impressions: g('impressions'),
+          clicks: g('clicks'), conversions: g('conversions'),
+          revenue: g('revenue'), impressionShare: g('impressionShare'),
+        };
+      }).filter((c) => c.nome || c.spend || c.clicks);
+    }
+
+    function badgeClass(v) {
+      return { escalar: 'b-escalar', otimizar: 'b-otimizar', pausar: 'b-pausar', manter: 'b-manter', aguardar: 'b-aguardar' }[v] || 'b-aguardar';
+    }
+
+    function render(d) {
+      let h = `<p><span class="score">${d.score}</span>/100</p><p style="margin:0.5rem 0 1rem">${d.resumo}</p>`;
+      if (d.fonte === 'regras' && d.ia_erro) {
+        h += `<p class="hint">Análise por regras (IA indisponível: ${d.ia_erro}). O resultado abaixo já é utilizável.</p>`;
+      }
+      h += '<div class="sec"><h3>Campanhas</h3><ul>';
+      d.campanhas.forEach((c) => {
+        h += `<li><strong>${c.nome}</strong> <span class="badge ${badgeClass(c.verdict)}">${c.verdictLabel}</span><br>
+          <span style="color:#71767b;font-size:0.85rem">R$${c.spend.toFixed(0)} · ${c.clicks} cliques · CTR ${c.ctr.toFixed(2)}% · ${c.conversions} conv</span></li>`;
+      });
+      h += '</ul></div>';
+      if (d.melhorar?.length) h += `<div class="sec warn"><h3>Melhorar</h3><ul>${d.melhorar.map((x) => `<li>${x}</li>`).join('')}</ul></div>`;
+      if (d.manter?.length) h += `<div class="sec ok"><h3>Manter (não precisa mudar)</h3><ul>${d.manter.map((x) => `<li>${x}</li>`).join('')}</ul></div>`;
+      if (d.nao_mexer?.length) h += `<div class="sec stop"><h3>Não mexer ainda</h3><ul>${d.nao_mexer.map((x) => `<li>${x}</li>`).join('')}</ul></div>`;
+      if (d.proximos_passos?.length) h += `<div class="sec"><h3>Faça hoje</h3><ol>${d.proximos_passos.map((x) => `<li>${x}</li>`).join('')}</ol></div>`;
+      document.getElementById('body').innerHTML = h;
+      document.getElementById('out').classList.add('show');
+    }
+
+    function showErr(m) { const e = document.getElementById('err'); e.textContent = m; e.style.display = 'block'; }
+    function hideErr() { document.getElementById('err').style.display = 'none'; }
+
+    document.getElementById('go').onclick = async () => {
+      hideErr();
+      const campaigns = collect();
+      if (!campaigns.length) return showErr('Adicione pelo menos uma campanha com dados.');
+      const btn = document.getElementById('go');
+      btn.disabled = true;
+      btn.textContent = 'Analisando…';
+      try {
+        const res = await fetch(API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            objetivo: document.getElementById('objetivo').value,
+            periodo: document.getElementById('periodo').value,
+            nicho: document.getElementById('nicho').value,
+            contexto: document.getElementById('contexto').value,
+            campaigns,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro na análise');
+        render(data);
+      } catch (e) {
+        showErr(e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Analisar campanhas';
+      }
+    };
+  </script>
+</body>
+</html>
