@@ -703,6 +703,12 @@ h3 {
   min-height: 240px;
 }
 
+.gallery-grid-keychains-only {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 760px;
+  margin-inline: auto;
+}
+
 .gallery-scroll-hint {
   margin: 0 0 14px;
   color: var(--color-muted);
