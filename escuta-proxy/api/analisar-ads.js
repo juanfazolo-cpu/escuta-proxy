@@ -238,16 +238,18 @@ Regras:
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 2800,
+        model: 'claude-opus-4-5',
+        max_tokens: 2500,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
 
     const data = await response.json();
     if (!response.ok) {
+      const apiError = data.error?.message || data.error?.type || 'Erro na API Anthropic';
       return res.status(response.status).json({
-        error: data.error?.message || 'Erro na API Anthropic',
+        error: apiError,
+        detail: data.error || null,
         benchmarks,
       });
     }

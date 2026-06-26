@@ -762,7 +762,11 @@
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Erro na análise');
+        if (!res.ok) {
+          const msg = data.error || 'Erro na análise';
+          const extra = data.detail?.message ? ` (${data.detail.message})` : '';
+          throw new Error(msg + extra);
+        }
 
         renderResults(data);
       } catch (e) {
