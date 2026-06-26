@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Analisador de Ads — Studio Escuta</title>
+  <title>Analisador Google Ads — Studio Escuta</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -375,9 +375,9 @@
   <div class="wrap">
     <header>
       <div class="badge">Studio Escuta · Media Intelligence</div>
-      <h1>Analisador de Campanhas</h1>
+      <h1>Analisador Google Ads</h1>
       <p class="subtitle">
-        Cole os dados do Gerenciador de Anúncios (Meta ou Google), defina seu objetivo e receba um diagnóstico com recomendações práticas para melhorar a campanha.
+        Exporte o relatório de campanhas no Google Ads, cole aqui, defina seu objetivo e receba diagnóstico com recomendações para Search, Display, YouTube e Performance Max.
       </p>
     </header>
 
@@ -390,27 +390,25 @@
     <div class="layout">
       <div class="card">
         <h2>Configuração</h2>
-        <label for="plataforma">Plataforma</label>
-        <select id="plataforma">
-          <option value="meta">Meta Ads (Facebook / Instagram)</option>
-          <option value="google">Google Ads</option>
-        </select>
 
         <label for="objetivo">Objetivo da campanha</label>
         <select id="objetivo">
           <option value="conversoes">Conversões (site, app, compra)</option>
-          <option value="trafego">Tráfego para site / LP</option>
-          <option value="leads">Geração de leads</option>
-          <option value="engajamento">Engajamento (posts, reels)</option>
-          <option value="reconhecimento">Reconhecimento de marca</option>
+          <option value="leads">Geração de leads (formulário, ligação)</option>
           <option value="vendas">Vendas / ROAS</option>
+          <option value="trafego">Tráfego para site / LP</option>
+          <option value="youtube">YouTube / vídeo</option>
+          <option value="reconhecimento">Reconhecimento de marca</option>
         </select>
 
-        <label for="periodo">Período analisado</label>
-        <input id="periodo" type="text" placeholder="ex: últimos 7 dias, março 2026" />
+        <label for="tipo_conta">Tipo de conta / nicho</label>
+        <input id="tipo_conta" type="text" placeholder="ex: SaaS B2B, clínica odontológica, e-commerce de café" />
 
-        <label for="contexto">Contexto (opcional)</label>
-        <textarea id="contexto" rows="3" placeholder="ex: lançamento de assinatura de café, ticket R$ 97, público frio, pixel instalado há 2 semanas"></textarea>
+        <label for="periodo">Período analisado</label>
+        <input id="periodo" type="text" placeholder="ex: últimos 30 dias, março 2026" />
+
+        <label for="contexto">Contexto adicional (opcional)</label>
+        <textarea id="contexto" rows="3" placeholder="ex: campanha de Pesquisa com Maximize Conversions, ticket R$ 197, LP com formulário, tag instalada via GTM"></textarea>
       </div>
 
       <div class="card">
@@ -426,9 +424,12 @@
         </div>
 
         <div id="panel-csv" class="panel">
-          <label for="csv">Cole a exportação do Gerenciador de Anúncios</label>
-          <textarea id="csv" placeholder="Nome da campanha, Valor gasto, Impressões, Cliques, CTR, Conversões...&#10;(copie do Excel ou do relatório exportado)"></textarea>
-          <p class="hint">Aceita separador vírgula ou ponto-e-vírgula. Detecta colunas em português e inglês.</p>
+          <label for="csv">Cole a exportação do Google Ads</label>
+          <p class="hint" style="margin-top:0;margin-bottom:0.75rem">
+            No Google Ads: <strong>Campanhas</strong> → ícone de colunas → inclua Custo, Impressões, Cliques, Conversões, CPC médio, Parcela de impr. → <strong>Download</strong> (.csv) → abra no Excel/Sheets e copie tudo aqui.
+          </p>
+          <textarea id="csv" placeholder="Campanha, Tipo de campanha, Custo, Impressões, Cliques, CTR, Conversões, Custo / conv....&#10;(separador vírgula ou ponto-e-vírgula)"></textarea>
+          <p class="hint">Detecta colunas em português e inglês do relatório do Google Ads.</p>
           <button type="button" class="btn btn-secondary" id="parse-csv">Importar CSV</button>
         </div>
       </div>
@@ -457,39 +458,48 @@
           <button type="button" class="btn-remove" title="Remover" onclick="removeCampaign(${id})">×</button>
           <h3>Campanha ${id}</h3>
           <label>Nome</label>
-          <input type="text" data-field="nome" placeholder="ex: [CONV] Assinatura — Público Frio" />
+          <input type="text" data-field="nome" placeholder="ex: [SEARCH] Marca + Conversão" />
+          <label>Tipo de campanha</label>
+          <select data-field="tipo">
+            <option value="search">Rede de Pesquisa</option>
+            <option value="pmax">Performance Max</option>
+            <option value="display">Display (GDN)</option>
+            <option value="youtube">YouTube</option>
+            <option value="demand_gen">Demand Gen</option>
+            <option value="outros">Outro</option>
+          </select>
           <div class="row">
             <div>
-              <label>Gasto (R$)</label>
+              <label>Custo (R$)</label>
               <input type="text" data-field="spend" placeholder="350,00" />
             </div>
             <div>
               <label>Impressões</label>
-              <input type="text" data-field="impressions" placeholder="45000" />
+              <input type="text" data-field="impressions" placeholder="12000" />
             </div>
           </div>
           <div class="row-3">
             <div>
               <label>Cliques</label>
-              <input type="text" data-field="clicks" placeholder="820" />
+              <input type="text" data-field="clicks" placeholder="420" />
             </div>
             <div>
               <label>Conversões</label>
-              <input type="text" data-field="conversions" placeholder="24" />
+              <input type="text" data-field="conversions" placeholder="18" />
             </div>
             <div>
-              <label>Receita (R$)</label>
-              <input type="text" data-field="revenue" placeholder="opcional" />
+              <label>Valor conv. (R$)</label>
+              <input type="text" data-field="revenue" placeholder="ROAS — opcional" />
             </div>
           </div>
           <div class="row">
             <div>
-              <label>Alcance</label>
-              <input type="text" data-field="reach" placeholder="opcional" />
+              <label>Parcela de impr. (%)</label>
+              <input type="text" data-field="impressionShare" placeholder="ex: 62% — Pesquisa" />
             </div>
             <div>
-              <label>Frequência</label>
-              <input type="text" data-field="frequency" placeholder="ex: 2.1" />
+              <label>Índice de qualidade</label>
+              <input type="text" data-field="qualityScore" placeholder="ex: 7 — opcional" />
             </div>
           </div>
         </div>`;
@@ -529,27 +539,54 @@
         const get = (field) => block.querySelector(`[data-field="${field}"]`)?.value || '';
         return {
           nome: get('nome'),
+          tipo: get('tipo') || 'search',
           spend: get('spend'),
           impressions: get('impressions'),
           clicks: get('clicks'),
           conversions: get('conversions'),
           revenue: get('revenue'),
-          reach: get('reach'),
-          frequency: get('frequency'),
+          impressionShare: get('impressionShare'),
+          qualityScore: get('qualityScore'),
         };
       }).filter((c) => c.nome || c.spend || c.impressions);
     }
 
     const COLUMN_MAP = {
-      nome: ['nome da campanha', 'campaign name', 'campanha', 'campaign', 'nome do conjunto', 'ad set name'],
-      spend: ['valor gasto', 'amount spent', 'gasto', 'spend', 'custo', 'cost'],
-      impressions: ['impressões', 'impressoes', 'impressions', 'imp'],
-      clicks: ['cliques', 'clicks', 'link clicks', 'cliques no link'],
-      conversions: ['resultados', 'conversões', 'conversoes', 'conversions', 'purchases', 'compras', 'leads'],
-      reach: ['alcance', 'reach'],
-      frequency: ['frequência', 'frequencia', 'frequency'],
-      revenue: ['receita', 'revenue', 'valor de conversão', 'conversion value'],
+      nome: ['campanha', 'campaign', 'nome da campanha', 'campaign name'],
+      tipo: ['tipo de campanha', 'campaign type', 'tipo', 'type'],
+      spend: ['custo', 'cost', 'valor gasto', 'amount spent', 'gasto'],
+      impressions: ['impressões', 'impressoes', 'impressions'],
+      clicks: ['cliques', 'clicks', 'cliques (todos)'],
+      conversions: ['conversões', 'conversoes', 'conversions', 'todas as conv', 'all conv'],
+      revenue: ['valor de conv', 'valor de conversão', 'conversion value', 'receita', 'revenue', 'valor conv'],
+      impressionShare: [
+        'parcela de impr',
+        'parcela de impressões',
+        'search impr. share',
+        'search impression share',
+        'impr. share',
+        'impression share',
+        'parcela impr exata',
+      ],
+      qualityScore: ['índice de qualidade', 'indice de qualidade', 'quality score', 'qualidade'],
     };
+
+    const TIPO_MAP = {
+      search: ['pesquisa', 'search', 'rede de pesquisa'],
+      pmax: ['performance max', 'pmax', 'p.max'],
+      display: ['display', 'rede de display', 'gdn'],
+      youtube: ['youtube', 'vídeo', 'video'],
+      demand_gen: ['demand gen', 'geração de demanda', 'geracao de demanda'],
+    };
+
+    function mapCampaignType(raw) {
+      if (!raw) return 'search';
+      const h = normalizeHeader(raw);
+      for (const [tipo, aliases] of Object.entries(TIPO_MAP)) {
+        if (aliases.some((a) => h.includes(a))) return tipo;
+      }
+      return 'outros';
+    }
 
     function normalizeHeader(h) {
       return h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
@@ -578,6 +615,7 @@
         fieldIndexes.forEach((field, idx) => {
           if (field && cols[idx] !== undefined) row[field] = cols[idx];
         });
+        if (row.tipo) row.tipo = mapCampaignType(row.tipo);
         if (Object.keys(row).length) rows.push(row);
       }
       return rows;
@@ -596,7 +634,9 @@
           const block = campaignsEl.lastElementChild;
           for (const [field, value] of Object.entries(row)) {
             const input = block.querySelector(`[data-field="${field}"]`);
-            if (input) input.value = value;
+            if (!input) continue;
+            if (input.tagName === 'SELECT') input.value = value;
+            else input.value = value;
           }
         });
         document.querySelector('[data-tab="manual"]').click();
@@ -630,7 +670,8 @@
           <div class="metric"><div class="val">${fmtMoney(b.cpc)}</div><div class="lbl">CPC</div></div>
           <div class="metric"><div class="val">${b.cpa ? fmtMoney(b.cpa) : '—'}</div><div class="lbl">CPA</div></div>
           <div class="metric"><div class="val">${b.cvr.toFixed(2)}%</div><div class="lbl">Conv. rate</div></div>
-          <div class="metric"><div class="val">${b.avgFrequency.toFixed(1)}</div><div class="lbl">Frequência</div></div>
+          <div class="metric"><div class="val">${b.roas ? b.roas.toFixed(2) + 'x' : '—'}</div><div class="lbl">ROAS</div></div>
+          <div class="metric"><div class="val">${b.avgImpressionShare ? b.avgImpressionShare.toFixed(0) + '%' : '—'}</div><div class="lbl">Parcela impr.</div></div>
         </div>`;
 
       if (b.flags?.length) {
@@ -671,8 +712,16 @@
         html += `</ul>`;
       }
 
+      const g = analysis.google_ads_especifico || {};
+      if (g.palavras_chave?.length || g.lances?.length || g.estrutura?.length || g.tracking?.length) {
+        html += `<div class="section-title">Google Ads — ações específicas</div><ul class="clean">`;
+        [...(g.palavras_chave || []), ...(g.lances || []), ...(g.estrutura || []), ...(g.tracking || [])]
+          .forEach((x) => { html += `<li>${x}</li>`; });
+        html += `</ul>`;
+      }
+
       if (analysis.proximos_passos?.length) {
-        html += `<div class="section-title">Faça hoje</div><ol style="padding-left:1.2rem;color:var(--text)">`;
+        html += `<div class="section-title">Faça hoje no Google Ads</div><ol style="padding-left:1.2rem;color:var(--text)">`;
         html += analysis.proximos_passos.map((s) => `<li style="margin-bottom:0.4rem">${s}</li>`).join('');
         html += `</ol>`;
       }
@@ -704,8 +753,8 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            plataforma: document.getElementById('plataforma').value,
             objetivo: document.getElementById('objetivo').value,
+            tipo_conta: document.getElementById('tipo_conta').value,
             periodo: document.getElementById('periodo').value,
             contexto: document.getElementById('contexto').value,
             campaigns,
