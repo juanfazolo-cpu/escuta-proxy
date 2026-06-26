@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analisador de Ads — Studio Escuta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a192f;
+      --surface: #112240;
+      --surface2: #1a2f4a;
+      --border: #233554;
+      --text: #e6f1ff;
+      --muted: #8892b0;
+      --accent: #64ffda;
+      --accent-dim: rgba(100, 255, 218, 0.12);
+      --warn: #ffd166;
+      --danger: #ff6b6b;
+      --ok: #64ffda;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(100, 255, 218, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(100, 255, 218, 0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid rgba(100, 255, 218, 0.25);
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      margin-bottom: 0.75rem;
+    }
+
+    h1 {
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle { color: var(--muted); max-width: 52ch; font-size: 0.98rem; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (min-width: 900px) {
+      .layout { grid-template-columns: 1fr 1fr; }
+      .layout .full { grid-column: 1 / -1; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+
+    .card h2 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+
+    select, input, textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 0.65rem 0.75rem;
+      font: inherit;
+      margin-bottom: 0.85rem;
+    }
+
+    select:focus, input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    textarea {
+      min-height: 120px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      resize: vertical;
+    }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+
+    @media (max-width: 600px) {
+      .row, .row-3 { grid-template-columns: 1fr; }
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .tab {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0.55rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.85rem;
+      transition: all 0.15s;
+    }
+
+    .tab.active {
+      background: var(--accent-dim);
+      border-color: rgba(100, 255, 218, 0.4);
+      color: var(--accent);
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .campaign-block {
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      position: relative;
+    }
+
+    .campaign-block h3 {
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+      color: var(--accent);
+    }
+
+    .btn-remove {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+
+    .btn-remove:hover { color: var(--danger); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      border: none;
+      border-radius: 8px;
+      padding: 0.7rem 1.1rem;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.15s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+      width: 100%;
+      font-size: 1rem;
+      padding: 0.9rem;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      margin-bottom: 0.75rem;
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: -0.5rem;
+      margin-bottom: 0.85rem;
+    }
+
+    #results { display: none; }
+    #results.visible { display: block; }
+
+    .score-ring {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      border: 4px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .score-header {
+      display: flex;
+      gap: 1.25rem;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .section-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin: 1.25rem 0 0.6rem;
+    }
+
+    ul.clean { list-style: none; }
+    ul.clean li {
+      padding: 0.55rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.92rem;
+    }
+    ul.clean li:last-child { border-bottom: none; }
+
+    .rec {
+      border-left: 3px solid var(--accent);
+      padding: 0.75rem 0 0.75rem 0.85rem;
+      margin-bottom: 0.65rem;
+      background: rgba(0,0,0,0.15);
+      border-radius: 0 8px 8px 0;
+    }
+
+    .rec .prio {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .prio.alta { color: var(--danger); }
+    .prio.media { color: var(--warn); }
+    .prio.baixa { color: var(--ok); }
+
+    .rec strong { display: block; margin: 0.2rem 0; }
+    .rec p { color: var(--muted); font-size: 0.86rem; }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .metric {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 0.65rem;
+      text-align: center;
+    }
+
+    .metric .val {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .metric .lbl { font-size: 0.72rem; color: var(--muted); margin-top: 0.15rem; }
+
+    .error {
+      background: rgba(255, 107, 107, 0.12);
+      border: 1px solid rgba(255, 107, 107, 0.35);
+      color: #ffb4b4;
+      padding: 0.85rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 0.75rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .steps {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .step {
+      font-size: 0.75rem;
+      color: var(--muted);
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+
+    .step.done { color: var(--accent); border-color: rgba(100,255,218,0.35); }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="wrap">
+    <header>
+      <div class="badge">Studio Escuta · Media Intelligence</div>
+      <h1>Analisador de Campanhas</h1>
+      <p class="subtitle">
+        Cole os dados do Gerenciador de Anúncios (Meta ou Google), defina seu objetivo e receba um diagnóstico com recomendações práticas para melhorar a campanha.
+      </p>
+    </header>
+
+    <div class="steps">
+      <span class="step done">1. Objetivo</span>
+      <span class="step done">2. Dados da campanha</span>
+      <span class="step done">3. Análise com IA</span>
+    </div>
+
+    <div class="layout">
+      <div class="card">
+        <h2>Configuração</h2>
+        <label for="plataforma">Plataforma</label>
+        <select id="plataforma">
+          <option value="meta">Meta Ads (Facebook / Instagram)</option>
+          <option value="google">Google Ads</option>
+        </select>
+
+        <label for="objetivo">Objetivo da campanha</label>
+        <select id="objetivo">
+          <option value="conversoes">Conversões (site, app, compra)</option>
+          <option value="trafego">Tráfego para site / LP</option>
+          <option value="leads">Geração de leads</option>
+          <option value="engajamento">Engajamento (posts, reels)</option>
+          <option value="reconhecimento">Reconhecimento de marca</option>
+          <option value="vendas">Vendas / ROAS</option>
+        </select>
+
+        <label for="periodo">Período analisado</label>
+        <input id="periodo" type="text" placeholder="ex: últimos 7 dias, março 2026" />
+
+        <label for="contexto">Contexto (opcional)</label>
+        <textarea id="contexto" rows="3" placeholder="ex: lançamento de assinatura de café, ticket R$ 97, público frio, pixel instalado há 2 semanas"></textarea>
+      </div>
+
+      <div class="card">
+        <h2>Dados das campanhas</h2>
+        <div class="tabs">
+          <button type="button" class="tab active" data-tab="manual">Manual</button>
+          <button type="button" class="tab" data-tab="csv">Colar CSV</button>
+        </div>
+
+        <div id="panel-manual" class="panel active">
+          <div id="campaigns"></div>
+          <button type="button" class="btn btn-secondary" id="add-campaign">+ Adicionar campanha</button>
+        </div>
+
+        <div id="panel-csv" class="panel">
+          <label for="csv">Cole a exportação do Gerenciador de Anúncios</label>
+          <textarea id="csv" placeholder="Nome da campanha, Valor gasto, Impressões, Cliques, CTR, Conversões...&#10;(copie do Excel ou do relatório exportado)"></textarea>
+          <p class="hint">Aceita separador vírgula ou ponto-e-vírgula. Detecta colunas em português e inglês.</p>
+          <button type="button" class="btn btn-secondary" id="parse-csv">Importar CSV</button>
+        </div>
+      </div>
+
+      <div class="card full">
+        <button type="button" class="btn btn-primary" id="analyze">Analisar campanhas</button>
+        <div id="error" class="error" style="display:none"></div>
+      </div>
+
+      <div class="card full" id="results">
+        <h2>Diagnóstico</h2>
+        <div id="results-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '/api/analisar-ads';
+
+    const campaignsEl = document.getElementById('campaigns');
+    let campaignCount = 0;
+
+    function campaignTemplate(id) {
+      return `
+        <div class="campaign-block" data-id="${id}">
+          <button type="button" class="btn-remove" title="Remover" onclick="removeCampaign(${id})">×</button>
+          <h3>Campanha ${id}</h3>
+          <label>Nome</label>
+          <input type="text" data-field="nome" placeholder="ex: [CONV] Assinatura — Público Frio" />
+          <div class="row">
+            <div>
+              <label>Gasto (R$)</label>
+              <input type="text" data-field="spend" placeholder="350,00" />
+            </div>
+            <div>
+              <label>Impressões</label>
+              <input type="text" data-field="impressions" placeholder="45000" />
+            </div>
+          </div>
+          <div class="row-3">
+            <div>
+              <label>Cliques</label>
+              <input type="text" data-field="clicks" placeholder="820" />
+            </div>
+            <div>
+              <label>Conversões</label>
+              <input type="text" data-field="conversions" placeholder="24" />
+            </div>
+            <div>
+              <label>Receita (R$)</label>
+              <input type="text" data-field="revenue" placeholder="opcional" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Alcance</label>
+              <input type="text" data-field="reach" placeholder="opcional" />
+            </div>
+            <div>
+              <label>Frequência</label>
+              <input type="text" data-field="frequency" placeholder="ex: 2.1" />
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function addCampaign() {
+      campaignCount += 1;
+      campaignsEl.insertAdjacentHTML('beforeend', campaignTemplate(campaignCount));
+    }
+
+    window.removeCampaign = function (id) {
+      const el = document.querySelector(`.campaign-block[data-id="${id}"]`);
+      if (el) el.remove();
+    };
+
+    document.getElementById('add-campaign').addEventListener('click', addCampaign);
+    addCampaign();
+
+    document.querySelectorAll('.tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach((p) => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+      });
+    });
+
+    function parseNumber(raw) {
+      if (!raw) return 0;
+      const s = String(raw).trim().replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
+      const n = parseFloat(s);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function collectCampaigns() {
+      return [...document.querySelectorAll('.campaign-block')].map((block) => {
+        const get = (field) => block.querySelector(`[data-field="${field}"]`)?.value || '';
+        return {
+          nome: get('nome'),
+          spend: get('spend'),
+          impressions: get('impressions'),
+          clicks: get('clicks'),
+          conversions: get('conversions'),
+          revenue: get('revenue'),
+          reach: get('reach'),
+          frequency: get('frequency'),
+        };
+      }).filter((c) => c.nome || c.spend || c.impressions);
+    }
+
+    const COLUMN_MAP = {
+      nome: ['nome da campanha', 'campaign name', 'campanha', 'campaign', 'nome do conjunto', 'ad set name'],
+      spend: ['valor gasto', 'amount spent', 'gasto', 'spend', 'custo', 'cost'],
+      impressions: ['impressões', 'impressoes', 'impressions', 'imp'],
+      clicks: ['cliques', 'clicks', 'link clicks', 'cliques no link'],
+      conversions: ['resultados', 'conversões', 'conversoes', 'conversions', 'purchases', 'compras', 'leads'],
+      reach: ['alcance', 'reach'],
+      frequency: ['frequência', 'frequencia', 'frequency'],
+      revenue: ['receita', 'revenue', 'valor de conversão', 'conversion value'],
+    };
+
+    function normalizeHeader(h) {
+      return h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    }
+
+    function mapHeader(header) {
+      const h = normalizeHeader(header);
+      for (const [field, aliases] of Object.entries(COLUMN_MAP)) {
+        if (aliases.some((a) => h.includes(a) || a.includes(h))) return field;
+      }
+      return null;
+    }
+
+    function parseCSV(text) {
+      const lines = text.trim().split(/\r?\n/).filter(Boolean);
+      if (lines.length < 2) throw new Error('CSV precisa de cabeçalho + pelo menos uma linha de dados');
+
+      const sep = lines[0].includes(';') ? ';' : ',';
+      const headers = lines[0].split(sep).map((h) => h.replace(/^"|"$/g, '').trim());
+      const fieldIndexes = headers.map((h) => mapHeader(h));
+
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(sep).map((c) => c.replace(/^"|"$/g, '').trim());
+        const row = {};
+        fieldIndexes.forEach((field, idx) => {
+          if (field && cols[idx] !== undefined) row[field] = cols[idx];
+        });
+        if (Object.keys(row).length) rows.push(row);
+      }
+      return rows;
+    }
+
+    document.getElementById('parse-csv').addEventListener('click', () => {
+      const text = document.getElementById('csv').value;
+      const errEl = document.getElementById('error');
+      try {
+        const rows = parseCSV(text);
+        if (!rows.length) throw new Error('Nenhuma campanha reconhecida no CSV');
+        campaignsEl.innerHTML = '';
+        campaignCount = 0;
+        rows.forEach((row) => {
+          addCampaign();
+          const block = campaignsEl.lastElementChild;
+          for (const [field, value] of Object.entries(row)) {
+            const input = block.querySelector(`[data-field="${field}"]`);
+            if (input) input.value = value;
+          }
+        });
+        document.querySelector('[data-tab="manual"]').click();
+        errEl.style.display = 'none';
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+      }
+    });
+
+    function fmtMoney(n) {
+      return 'R$ ' + Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function renderResults(data) {
+      const { analysis, benchmarks } = data;
+      const b = benchmarks;
+      const prioClass = (p) => (p || '').toLowerCase();
+
+      let html = `
+        <div class="score-header">
+          <div class="score-ring">${analysis.score ?? '—'}</div>
+          <div>
+            <p style="font-size:1.05rem;margin-bottom:0.35rem">${analysis.resumo || ''}</p>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric"><div class="val">${fmtMoney(b.totals.spend)}</div><div class="lbl">Gasto</div></div>
+          <div class="metric"><div class="val">${b.ctr.toFixed(2)}%</div><div class="lbl">CTR</div></div>
+          <div class="metric"><div class="val">${fmtMoney(b.cpc)}</div><div class="lbl">CPC</div></div>
+          <div class="metric"><div class="val">${b.cpa ? fmtMoney(b.cpa) : '—'}</div><div class="lbl">CPA</div></div>
+          <div class="metric"><div class="val">${b.cvr.toFixed(2)}%</div><div class="lbl">Conv. rate</div></div>
+          <div class="metric"><div class="val">${b.avgFrequency.toFixed(1)}</div><div class="lbl">Frequência</div></div>
+        </div>`;
+
+      if (b.flags?.length) {
+        html += `<div class="section-title">Alertas automáticos</div><ul class="clean">${b.flags.map((f) => `<li>⚠ ${f}</li>`).join('')}</ul>`;
+      }
+
+      const diag = analysis.diagnostico || {};
+      if (diag.funciona?.length) {
+        html += `<div class="section-title">O que funciona</div><ul class="clean">${diag.funciona.map((x) => `<li>✓ ${x}</li>`).join('')}</ul>`;
+      }
+      if (diag.nao_funciona?.length) {
+        html += `<div class="section-title">O que não funciona</div><ul class="clean">${diag.nao_funciona.map((x) => `<li>✗ ${x}</li>`).join('')}</ul>`;
+      }
+
+      if (analysis.recomendacoes?.length) {
+        html += `<div class="section-title">Recomendações</div>`;
+        html += analysis.recomendacoes.map((r) => `
+          <div class="rec">
+            <span class="prio ${prioClass(r.prioridade)}">${r.prioridade || 'média'}</span>
+            <strong>${r.acao || ''}</strong>
+            <p>${r.motivo || ''}</p>
+            ${r.impacto_esperado ? `<p><em>Impacto:</em> ${r.impacto_esperado}</p>` : ''}
+          </div>`).join('');
+      }
+
+      if (analysis.testes_ab?.length) {
+        html += `<div class="section-title">Testes A/B sugeridos</div><ul class="clean">`;
+        html += analysis.testes_ab.map((t) => `<li><strong>${t.hipotese}</strong><br><span style="color:var(--muted);font-size:0.85rem">Métrica: ${t.metrica} · ${t.duracao_sugerida || ''}</span></li>`).join('');
+        html += `</ul>`;
+      }
+
+      const orc = analysis.orcamento || {};
+      if (orc.pausar?.length || orc.escalar?.length || orc.realocar) {
+        html += `<div class="section-title">Orçamento</div><ul class="clean">`;
+        if (orc.pausar?.length) html += orc.pausar.map((x) => `<li>Pausar: ${x}</li>`).join('');
+        if (orc.escalar?.length) html += orc.escalar.map((x) => `<li>Escalar: ${x}</li>`).join('');
+        if (orc.realocar) html += `<li>Realocar: ${orc.realocar}</li>`;
+        html += `</ul>`;
+      }
+
+      if (analysis.proximos_passos?.length) {
+        html += `<div class="section-title">Faça hoje</div><ol style="padding-left:1.2rem;color:var(--text)">`;
+        html += analysis.proximos_passos.map((s) => `<li style="margin-bottom:0.4rem">${s}</li>`).join('');
+        html += `</ol>`;
+      }
+
+      document.getElementById('results-body').innerHTML = html;
+      document.getElementById('results').classList.add('visible');
+    }
+
+    document.getElementById('analyze').addEventListener('click', async () => {
+      const errEl = document.getElementById('error');
+      const resultsEl = document.getElementById('results');
+      const btn = document.getElementById('analyze');
+      errEl.style.display = 'none';
+
+      const campaigns = collectCampaigns();
+      if (!campaigns.length) {
+        errEl.textContent = 'Adicione pelo menos uma campanha com dados.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Analisando…';
+      resultsEl.classList.add('visible');
+      document.getElementById('results-body').innerHTML = '<div class="loading"><div class="spinner"></div>Gerando diagnóstico com base no seu objetivo…</div>';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plataforma: document.getElementById('plataforma').value,
+            objetivo: document.getElementById('objetivo').value,
+            periodo: document.getElementById('periodo').value,
+            contexto: document.getElementById('contexto').value,
+            campaigns,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro na análise');
+
+        renderResults(data);
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+        resultsEl.classList.remove('visible');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Analisar campanhas';
+      }
+    });
+  </script>
+</body>
+</html>
