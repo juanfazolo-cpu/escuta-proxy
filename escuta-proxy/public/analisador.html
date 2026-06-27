@@ -89,12 +89,18 @@
     .tab.on { border-color: #1d9bf0; color: #1d9bf0; }
     .panel { display: none; }
     .panel.on { display: block; }
+    .status { font-size: 0.85rem; padding: 0.65rem 0.75rem; border-radius: 8px; margin-bottom: 0.75rem; }
+    .status-ok { background: #0d2a1a; border: 1px solid #1a6640; color: #00ba7c; }
+    .status-warn { background: #2a220d; border: 1px solid #665500; color: #ffd400; }
+    .status-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .status-row .btn { width: auto; flex: 1; min-width: 140px; padding: 0.65rem 0.85rem; }
+    .api-preview { font-size: 0.82rem; color: #71767b; margin-top: 0.5rem; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Analisador Google Ads</h1>
-    <p class="sub">Cole os dados das campanhas e receba o que melhorar, o que manter e o que não mexer ainda.</p>
+    <p class="sub">Conecte a API do Google Ads ou cole os dados manualmente — receba o que melhorar, manter e não mexer ainda.</p>
 
     <div class="card">
       <h2>1 — Seu objetivo</h2>
@@ -123,10 +129,32 @@
     <div class="card">
       <h2>2 — Dados das campanhas</h2>
       <div class="tabs">
-        <button type="button" class="tab on" data-tab="manual">Preencher</button>
-        <button type="button" class="tab" data-tab="csv">Colar do Google Ads</button>
+        <button type="button" class="tab on" data-tab="api">Conectar API</button>
+        <button type="button" class="tab" data-tab="manual">Preencher</button>
+        <button type="button" class="tab" data-tab="csv">Colar CSV</button>
       </div>
-      <div id="p-manual" class="panel on">
+      <div id="p-api" class="panel on">
+        <div id="gads-status" class="status status-warn">Verificando conexão com Google Ads…</div>
+        <div class="status-row">
+          <button type="button" class="btn" id="gads-connect">Conectar Google Ads</button>
+          <button type="button" class="btn btn-ghost" id="gads-disconnect" style="display:none">Desconectar</button>
+        </div>
+        <div id="gads-form" style="display:none">
+          <label>Conta Google Ads</label>
+          <select id="gads-account"></select>
+          <label>Período dos dados</label>
+          <select id="gads-periodo">
+            <option value="7">Últimos 7 dias</option>
+            <option value="14">Últimos 14 dias</option>
+            <option value="30" selected>Últimos 30 dias</option>
+            <option value="90">Últimos 90 dias</option>
+          </select>
+          <button type="button" class="btn btn-ghost" id="gads-fetch">Buscar campanhas da API</button>
+          <p class="hint">Os números vêm direto do Google Ads (sem interpretar CSV). Depois clique em <strong>Analisar campanhas</strong>.</p>
+          <p id="gads-preview" class="api-preview"></p>
+        </div>
+      </div>
+      <div id="p-manual" class="panel">
         <div id="lista"></div>
         <button type="button" class="btn btn-ghost" id="add">+ Campanha</button>
       </div>
@@ -148,7 +176,14 @@
 
   <script>
     const API = '/api/analisador';
+    const GADS = {
+      accounts: '/api/google-ads/accounts',
+      campaigns: '/api/google-ads/campaigns',
+      auth: '/api/google-ads/auth',
+      disconnect: '/api/google-ads/disconnect',
+    };
     let n = 0;
+    let gadsConnected = false;
     const lista = document.getElementById('lista');
 
     function tpl(id) {
@@ -194,6 +229,105 @@
     });
 
     document.getElementById('add').onclick = add;
+
+    function setStatus(el, kind, text) {
+      el.className = 'status status-' + kind;
+      el.textContent = text;
+    }
+
+    async function loadGoogleAdsAccounts() {
+      const status = document.getElementById('gads-status');
+      const form = document.getElementById('gads-form');
+      const connectBtn = document.getElementById('gads-connect');
+      const disconnectBtn = document.getElementById('gads-disconnect');
+
+      try {
+        const res = await fetch(GADS.accounts, { credentials: 'include' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Não conectado');
+
+        gadsConnected = true;
+        connectBtn.style.display = 'none';
+        disconnectBtn.style.display = 'block';
+        form.style.display = 'block';
+        setStatus(status, 'ok', 'Conta Google Ads conectada. Escolha a conta e busque as campanhas.');
+
+        const sel = document.getElementById('gads-account');
+        sel.innerHTML = data.accounts.map((a) =>
+          `<option value="${a.id}">${a.name} (${a.formatted_id})</option>`
+        ).join('');
+      } catch (e) {
+        gadsConnected = false;
+        connectBtn.style.display = 'block';
+        disconnectBtn.style.display = 'none';
+        form.style.display = 'none';
+        const msg = e.message.includes('não conectada')
+          ? 'Conecte sua conta Google para puxar métricas sem copiar/colar.'
+          : e.message;
+        setStatus(status, 'warn', msg);
+      }
+    }
+
+    function handleOAuthReturn() {
+      const params = new URLSearchParams(location.search);
+      const state = params.get('google_ads');
+      if (!state) return;
+
+      if (state === 'connected') {
+        setStatus(document.getElementById('gads-status'), 'ok', 'Conectado com sucesso! Carregando contas…');
+      } else if (state === 'error') {
+        const msg = params.get('msg') || 'Erro na conexão';
+        setStatus(document.getElementById('gads-status'), 'warn', decodeURIComponent(msg));
+      }
+      history.replaceState({}, '', location.pathname);
+    }
+
+    document.getElementById('gads-connect').onclick = () => {
+      location.href = GADS.auth;
+    };
+
+    document.getElementById('gads-disconnect').onclick = async () => {
+      await fetch(GADS.disconnect, { method: 'POST', credentials: 'include' });
+      document.getElementById('gads-preview').textContent = '';
+      loadGoogleAdsAccounts();
+    };
+
+    document.getElementById('gads-fetch').onclick = async () => {
+      hideErr();
+      const btn = document.getElementById('gads-fetch');
+      const preview = document.getElementById('gads-preview');
+      btn.disabled = true;
+      btn.textContent = 'Buscando…';
+      preview.textContent = '';
+
+      try {
+        const res = await fetch(GADS.campaigns, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_id: document.getElementById('gads-account').value,
+            periodo: document.getElementById('gads-periodo').value,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro ao buscar campanhas');
+
+        fillCampaigns(data.campaigns);
+        document.getElementById('periodo').value = data.periodo;
+        document.querySelector('[data-tab="manual"]').click();
+        preview.textContent = `${data.total} campanha(s) importadas da API (${data.periodo}). Revise na aba Preencher e clique Analisar.`;
+        setStatus(document.getElementById('gads-status'), 'ok', 'Dados carregados da API com sucesso.');
+      } catch (e) {
+        showErr(e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Buscar campanhas da API';
+      }
+    };
+
+    handleOAuthReturn();
+    loadGoogleAdsAccounts();
 
     const MAP_ORDER = [
       ['nome', ['nome da campanha', 'campaign name', 'campanha', 'campaign']],
@@ -298,7 +432,9 @@
             else if (v.includes('pesquisa') || v.includes('search')) el.value = 'search';
             else el.value = 'outros';
           } else {
-            el.value = val;
+            el.value = typeof val === 'number'
+              ? (Number.isInteger(val) ? val : val.toFixed(2))
+              : val;
           }
         });
       });
@@ -378,7 +514,7 @@
       const campaigns = collect();
       if (!campaigns.length) {
         return showErr(
-          'Nenhuma campanha com dados. Cole o relatório na aba "Colar do Google Ads" e clique Analisar — ou preencha os campos manualmente (nome, custo ou cliques).'
+          'Nenhuma campanha com dados. Use a aba "Conectar API", cole um CSV ou preencha manualmente (nome, custo ou cliques).'
         );
       }
       const btn = document.getElementById('go');
