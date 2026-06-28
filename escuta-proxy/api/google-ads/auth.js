@@ -2,6 +2,8 @@ import crypto from 'crypto';
 import {
   buildAuthUrl,
   clearOAuthStateCookie,
+  cookieOptions,
+  expiredStateCookie,
   getConfig,
   getRedirectUri,
   setOAuthStateCookie,
@@ -16,7 +18,8 @@ export default async function handler(req, res) {
   }
 
   const state = crypto.randomBytes(16).toString('hex');
-  setOAuthStateCookie(res, state);
+  const opts = cookieOptions(req);
+  setOAuthStateCookie(res, state, opts);
 
   const url = buildAuthUrl({
     clientId: config.clientId,

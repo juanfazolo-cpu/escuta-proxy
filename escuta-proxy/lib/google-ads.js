@@ -32,7 +32,7 @@ export function getConfig() {
     return {
       ok: false,
       error:
-        'Google Ads API não configurada. Defina GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET e GOOGLE_ADS_DEVELOPER_TOKEN no Vercel.',
+        'Google Ads API não configurada. Defina GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET e GOOGLE_ADS_DEVELOPER_TOKEN no arquivo .env.',
     };
   }
 
@@ -48,9 +48,30 @@ export function getConfig() {
 
 export function getRedirectUri(req) {
   if (process.env.GOOGLE_ADS_REDIRECT_URI) return process.env.GOOGLE_ADS_REDIRECT_URI;
-  const proto = req.headers['x-forwarded-proto'] || 'https';
-  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  if (process.env.PUBLIC_URL) {
+    return `${process.env.PUBLIC_URL.replace(/\/$/, '')}/api/google-ads/callback`;
+  }
+  const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
+  const secure = cookieOptions(req).secure;
+  const proto = req.headers['x-forwarded-proto'] || (secure ? 'https' : 'http');
   return `${proto}://${host}/api/google-ads/callback`;
+}
+
+export function cookieOptions(req) {
+  const forced = process.env.COOKIE_SECURE;
+  if (forced === 'true') return { secure: true };
+  if (forced === 'false') return { secure: false };
+
+  const proto = req?.headers?.['x-forwarded-proto'];
+  if (proto) return { secure: proto === 'https' };
+
+  const host = String(req?.headers?.host || '');
+  const local = host.includes('localhost') || host.startsWith('127.0.0.1') || host.startsWith('[::1]');
+  return { secure: !local };
+}
+
+function cookieFlags(options = {}) {
+  return `Path=/; HttpOnly; SameSite=Lax${options.secure ? '; Secure' : ''}`;
 }
 
 export function normalizeCustomerId(id) {
@@ -81,17 +102,18 @@ function verifyPayload(token, secret) {
 const COOKIE_NAME = 'gads_session';
 const STATE_COOKIE = 'gads_oauth_state';
 
-export function setSessionCookie(res, refreshToken, secret, extraCookies = []) {
+export function setSessionCookie(res, refreshToken, secret, extraCookies = [], options = {}) {
   const token = signPayload({ refresh_token: refreshToken, at: Date.now() }, secret);
+  const flags = cookieFlags(options);
   const cookies = [
-    `${COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 60 * 24 * 30}`,
+    `${COOKIE_NAME}=${token}; ${flags}; Max-Age=${60 * 60 * 24 * 30}`,
     ...extraCookies,
   ];
   res.setHeader('Set-Cookie', cookies);
 }
 
-export function clearSessionCookie(res) {
-  res.setHeader('Set-Cookie', `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);
+export function clearSessionCookie(res, options = {}) {
+  res.setHeader('Set-Cookie', `${COOKIE_NAME}=; ${cookieFlags(options)}; Max-Age=0`);
 }
 
 export function getRefreshToken(req, secret) {
@@ -101,19 +123,20 @@ export function getRefreshToken(req, secret) {
   return payload.refresh_token || null;
 }
 
-export function setOAuthStateCookie(res, state) {
-  res.setHeader(
-    'Set-Cookie',
-    `${STATE_COOKIE}=${state}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
-  );
+export function setOAuthStateCookie(res, state, options = {}) {
+  res.setHeader('Set-Cookie', `${STATE_COOKIE}=${state}; ${cookieFlags(options)}; Max-Age=600`);
 }
 
 export function readOAuthState(req) {
   return parseCookies(req)[STATE_COOKIE] || null;
 }
 
-export function clearOAuthStateCookie(res) {
-  res.setHeader('Set-Cookie', `${STATE_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);
+export function clearOAuthStateCookie(res, options = {}) {
+  res.setHeader('Set-Cookie', expiredStateCookie(options));
+}
+
+export function expiredStateCookie(options = {}) {
+  return `${STATE_COOKIE}=; ${cookieFlags(options)}; Max-Age=0`;
 }
 
 function parseCookies(req) {

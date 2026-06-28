@@ -1,10 +1,12 @@
 import {
   exchangeCodeForTokens,
+  cookieOptions,
+  clearOAuthStateCookie,
+  expiredStateCookie,
   getConfig,
   getRedirectUri,
   readOAuthState,
   setSessionCookie,
-  clearOAuthStateCookie,
 } from '../../lib/google-ads.js';
 
 export default async function handler(req, res) {
@@ -16,14 +18,16 @@ export default async function handler(req, res) {
   }
 
   const { code, state, error } = req.query || {};
-  clearOAuthStateCookie(res);
+  const opts = cookieOptions(req);
 
   if (error) {
+    clearOAuthStateCookie(res, opts);
     return res.redirect(302, `/analisador.html?google_ads=error&msg=${encodeURIComponent(error)}`);
   }
 
   const savedState = readOAuthState(req);
   if (!code || !state || state !== savedState) {
+    clearOAuthStateCookie(res, opts);
     return res.redirect(302, '/analisador.html?google_ads=error&msg=state');
   }
 
@@ -35,9 +39,7 @@ export default async function handler(req, res) {
       redirectUri: getRedirectUri(req),
     });
 
-    setSessionCookie(res, tokens.refresh_token, config.sessionSecret, [
-      'gads_oauth_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0',
-    ]);
+    setSessionCookie(res, tokens.refresh_token, config.sessionSecret, [expiredStateCookie(opts)], opts);
     return res.redirect(302, '/analisador.html?google_ads=connected');
   } catch (err) {
     return res.redirect(302, `/analisador.html?google_ads=error&msg=${encodeURIComponent(err.message)}`);
