@@ -41,6 +41,17 @@ const PUBLIC = getPublicDir(ROOT);
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
 
+const analisadorPage = join(PUBLIC, 'analisador.html');
+if (!existsSync(analisadorPage)) {
+  console.error('');
+  console.error('ERRO: analisador.html não encontrado em:', PUBLIC);
+  console.error('Execute o servidor a partir da pasta escuta-proxy:');
+  console.error('  cd escuta-proxy');
+  console.error('  npm start');
+  console.error('');
+  process.exit(1);
+}
+
 const routes = {
   '/api/analisador': analisador,
   '/api/gerar': gerar,
@@ -68,8 +79,18 @@ const server = http.createServer(async (nodeReq, nodeRes) => {
     }
 
     nodeRes.statusCode = 404;
-    nodeRes.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    nodeRes.end('Não encontrado');
+    nodeRes.setHeader('Content-Type', 'text/html; charset=utf-8');
+    nodeRes.end(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Não encontrado</title></head>
+<body style="font-family:system-ui;max-width:520px;margin:3rem auto;padding:0 1rem;line-height:1.5">
+<h1>Página não encontrada</h1>
+<p>Se você esperava o <strong>Analisador Google Ads</strong>, o servidor pode não estar rodando corretamente.</p>
+<ol>
+<li>Abra o terminal na pasta <code>escuta-proxy</code></li>
+<li>Execute: <code>npm start</code></li>
+<li>Acesse: <a href="/analisador.html">/analisador.html</a></li>
+</ol>
+<p style="color:#666;font-size:0.9rem">Servidor em: ${PUBLIC}</p>
+</body></html>`);
   } catch (err) {
     if (!nodeRes.headersSent) {
       nodeRes.statusCode = 500;
@@ -81,9 +102,12 @@ const server = http.createServer(async (nodeReq, nodeRes) => {
 
 server.listen(PORT, HOST, () => {
   const base = process.env.PUBLIC_URL || `http://localhost:${PORT}`;
-  console.log(`Analisador Google Ads rodando em ${base}`);
-  console.log(`  → ${base}/analisador.html`);
+  console.log('');
+  console.log('Analisador Google Ads rodando!');
+  console.log(`  Abra: ${base}/analisador.html`);
+  console.log(`  Pasta: ${ROOT}`);
   if (!process.env.GOOGLE_ADS_CLIENT_ID) {
-    console.log('  ⚠ Defina GOOGLE_ADS_* no arquivo .env (veja .env.example)');
+    console.log('  Google Ads: copie .env.example → .env e preencha as chaves');
   }
+  console.log('');
 });
