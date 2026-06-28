@@ -7,6 +7,26 @@
     "api/analisador.js": {
       "memory": 256,
       "maxDuration": 30
+    },
+    "api/google-ads/auth.js": {
+      "memory": 256,
+      "maxDuration": 10
+    },
+    "api/google-ads/callback.js": {
+      "memory": 256,
+      "maxDuration": 15
+    },
+    "api/google-ads/accounts.js": {
+      "memory": 256,
+      "maxDuration": 30
+    },
+    "api/google-ads/campaigns.js": {
+      "memory": 256,
+      "maxDuration": 30
+    },
+    "api/google-ads/disconnect.js": {
+      "memory": 128,
+      "maxDuration": 5
     }
   }
 }

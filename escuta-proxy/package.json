@@ -1,5 +1,13 @@
 {
   "name": "escuta-proxy",
   "version": "1.0.0",
-  "description": "Proxy API para gerador de carrosséis Studio Escuta"
+  "description": "Analisador Google Ads e proxy API Studio Escuta",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  }
 }
