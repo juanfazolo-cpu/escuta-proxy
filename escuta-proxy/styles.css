@@ -678,6 +678,76 @@ h3 {
   border-block: 1px solid var(--color-line);
 }
 
+.characters-section {
+  padding: 88px 0;
+}
+
+.characters-lead {
+  max-width: 760px;
+  color: var(--color-muted);
+  font-size: 1.12rem;
+}
+
+.characters-copy {
+  display: grid;
+  gap: 16px;
+  max-width: 860px;
+  margin-bottom: 28px;
+}
+
+.characters-copy p {
+  margin: 0;
+  color: #3f4a5f;
+  font-size: 1.02rem;
+}
+
+.characters-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.characters-highlights span {
+  padding: 12px 15px;
+  font-weight: 800;
+  background: #fff;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(23, 23, 23, 0.05);
+}
+
+.gallery-grid-characters {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 240px;
+  margin-bottom: 28px;
+}
+
+.characters-special-band {
+  max-width: 900px;
+  margin: 0 auto 12px;
+  padding: 24px 26px;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(32, 169, 232, 0.1), transparent 14rem),
+    #ffffff;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.characters-special-band strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 1.08rem;
+}
+
+.characters-special-band p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
 .audience-content {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -1226,6 +1296,10 @@ h3 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .gallery-grid-characters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .gallery-grid-keychains-only {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1345,6 +1419,7 @@ h3 {
   .product-section,
   .benefits-section,
   .process-section,
+  .characters-section,
   .gallery-section {
     padding: 64px 0;
   }
@@ -1353,7 +1428,8 @@ h3 {
   .benefits-grid,
   .process-list,
   .gallery-grid,
-  .gallery-grid-catalog {
+  .gallery-grid-catalog,
+  .gallery-grid-characters {
     grid-template-columns: 1fr;
   }
 
