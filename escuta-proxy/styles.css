@@ -719,8 +719,70 @@ h3 {
 
 .gallery-grid-characters {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-rows: 240px;
+  grid-auto-rows: auto;
+  align-items: start;
+  gap: 20px;
   margin-bottom: 28px;
+}
+
+.characters-gallery-group {
+  margin: 36px 0 18px;
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+}
+
+.characters-gallery-group:first-of-type {
+  margin-top: 8px;
+}
+
+.gallery-grid-characters .gallery-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  height: auto;
+  min-height: 0;
+  padding: 14px 12px 12px;
+  overflow: visible;
+}
+
+.gallery-grid-characters .gallery-card img {
+  display: block;
+  flex: 0 0 auto;
+  width: min(72%, 132px);
+  height: 132px;
+  margin: 0 auto;
+  padding: 10px;
+  object-fit: contain;
+  object-position: center center;
+  background: #f5f7fa;
+  border: 1px solid rgba(52, 64, 87, 0.14);
+  border-radius: 14px;
+  box-sizing: border-box;
+}
+
+.gallery-grid-characters .gallery-card:hover img {
+  transform: none;
+}
+
+.gallery-grid-characters .gallery-card-clickable:hover {
+  transform: none;
+}
+
+.gallery-grid-characters .gallery-card figcaption {
+  position: static;
+  flex-shrink: 0;
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--color-ink);
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1.35;
+  text-align: center;
+  background: rgba(52, 64, 87, 0.08);
+  border-radius: 12px;
+  backdrop-filter: none;
 }
 
 .characters-special-band {
@@ -1300,6 +1362,11 @@ h3 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .gallery-grid-characters .gallery-card img {
+    width: min(68%, 118px);
+    height: 118px;
+  }
+
   .gallery-grid-keychains-only {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1430,7 +1497,12 @@ h3 {
   .gallery-grid,
   .gallery-grid-catalog,
   .gallery-grid-characters {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gallery-grid-characters .gallery-card img {
+    width: min(64%, 108px);
+    height: 108px;
   }
 
   .gallery-grid-keychains-only {
