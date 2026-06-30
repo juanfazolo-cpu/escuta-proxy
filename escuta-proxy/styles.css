@@ -23,6 +23,11 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 92px;
+}
+
+[id] {
+  scroll-margin-top: 92px;
 }
 
 body {
