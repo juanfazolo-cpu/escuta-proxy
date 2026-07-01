@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Romaneio – Taldo Studio 3D</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; padding: 30px; }
+  .container { background: white; border-radius: 12px; padding: 32px; width: 760px; max-width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+
+  .header { display: flex; align-items: center; border-bottom: 4px solid #f5c400; padding-bottom: 18px; margin-bottom: 22px; gap: 18px; }
+  .header img { width: 100px; height: 100px; object-fit: contain; }
+  .empresa-info h1 { font-size: 22px; color: #1565c0; margin-bottom: 4px; }
+  .empresa-info p { font-size: 12px; color: #555; margin: 2px 0; }
+  .romaneio-badge { margin-left: auto; background: #1565c0; color: white; padding: 10px 18px; border-radius: 8px; text-align: center; }
+  .romaneio-badge .num-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+  .romaneio-badge input { background: transparent; border: none; color: white; font-size: 22px; font-weight: bold; width: 80px; text-align: center; outline: none; }
+
+  .meta { display: flex; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+  .meta div { flex: 1; min-width: 130px; }
+  .meta label { font-size: 10px; color: #888; display: block; margin-bottom: 4px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+  .meta input { width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+  .meta input:focus { outline: 2px solid #1565c0; border-color: transparent; }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  thead tr { background: #1565c0; color: white; }
+  thead th { padding: 10px 8px; text-align: left; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+  tbody tr:nth-child(even) { background: #f8f9ff; }
+  tbody tr:hover { background: #fff8cc; }
+  tbody td { padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 13px; vertical-align: middle; }
+  tbody td input[type=text], tbody td input[type=number] { width: 100%; border: none; background: transparent; font-size: 13px; padding: 2px 4px; }
+  tbody td input:focus { background: #fffde7; outline: 1px solid #f5c400; border-radius: 3px; }
+
+  .foto-cell { width: 64px; text-align: center; }
+  .foto-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; cursor: pointer; display: block; margin: auto; }
+  .foto-placeholder { width: 48px; height: 48px; border: 2px dashed #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; margin: auto; color: #bbb; font-size: 20px; transition: border-color 0.2s; }
+  .foto-placeholder:hover { border-color: #1565c0; color: #1565c0; }
+  .foto-input { display: none; }
+
+  .totals { display: flex; justify-content: flex-end; gap: 30px; font-size: 14px; font-weight: bold; color: #1565c0; margin-bottom: 20px; background: #f0f4ff; padding: 12px 16px; border-radius: 8px; flex-wrap: wrap; }
+
+  .obs-label { font-size: 10px; color: #888; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
+  textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; resize: vertical; font-family: Arial, sans-serif; }
+  textarea:focus { outline: 2px solid #1565c0; border-color: transparent; }
+
+  .buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+  button { padding: 10px 20px; border: none; border-radius: 7px; font-size: 13px; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
+  .btn-add { background: #1565c0; color: white; }
+  .btn-remove { background: #e74c3c; color: white; }
+  .btn-print { background: #f5c400; color: #1a1a1a; }
+  .btn-whatsapp { background: #25d366; color: white; }
+  .btn-save { background: #607d8b; color: white; }
+  button:hover { opacity: 0.85; }
+
+  .footer { text-align: center; font-size: 11px; color: #bbb; margin-top: 22px; border-top: 1px solid #eee; padding-top: 14px; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100; }
+  .toast.show { opacity: 1; }
+
+  @media print {
+    body { background: white; padding: 0; }
+    .container { box-shadow: none; width: 100%; border-radius: 0; }
+    .buttons { display: none; }
+    .foto-placeholder { display: none; }
+    tbody td input { pointer-events: none; }
+    .toast { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <img src="logo.svg" alt="Taldo Studio 3D">
+    <div class="empresa-info">
+      <h1>Taldo Studio 3D</h1>
+      <p>Av. Sebastião Henriques, 575</p>
+      <p>Impressão 3D Personalizada</p>
+      <p>@TaldoStudio3d</p>
+    </div>
+    <div class="romaneio-badge">
+      <div class="num-label">Romaneio Nº</div>
+      <input type="text" id="num" value="001">
+    </div>
+  </div>
+
+  <div class="meta">
+    <div>
+      <label>Data</label>
+      <input type="date" id="data">
+    </div>
+    <div>
+      <label>Cliente</label>
+      <input type="text" id="cliente" placeholder="Nome do cliente">
+    </div>
+    <div>
+      <label>WhatsApp</label>
+      <input type="text" id="whatsapp" placeholder="(xx) xxxxx-xxxx">
+    </div>
+    <div>
+      <label>Pedido / Ref.</label>
+      <input type="text" id="pedido" placeholder="Ex: #123">
+    </div>
+  </div>
+
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th style="width:36px">#</th>
+        <th style="width:64px">Foto</th>
+        <th>Descrição do Item</th>
+        <th style="width:70px">Qtd</th>
+        <th style="width:110px">Valor Unit.</th>
+        <th style="width:110px">Total</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <div class="totals">
+    <span>Total de Itens: <span id="totalQtd">0</span></span>
+    <span>Valor Total: R$ <span id="totalValor">0,00</span></span>
+  </div>
+
+  <label class="obs-label">Observações</label>
+  <textarea id="obs" rows="3" placeholder="Prazo de entrega, instruções especiais, forma de pagamento..."></textarea>
+
+  <div class="buttons">
+    <button class="btn-add" type="button" onclick="addRow()">+ Adicionar Item</button>
+    <button class="btn-remove" type="button" onclick="removeRow()">− Remover Último</button>
+    <button class="btn-save" type="button" onclick="salvarRascunho()">💾 Salvar Rascunho</button>
+    <button class="btn-whatsapp" type="button" onclick="enviarWhatsApp()">📱 Enviar WhatsApp</button>
+    <button class="btn-print" type="button" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+
+  <div class="footer">Taldo Studio 3D · Impressão 3D Personalizada · Av. Sebastião Henriques, 575 · @TaldoStudio3d</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const STORAGE_KEY = 'taldo_romaneio_rascunho';
+
+  document.getElementById('data').valueAsDate = new Date();
+
+  const itensIniciais = [
+    { desc: 'Verde e Amarelo', qtd: 3 },
+    { desc: 'Amarelo e Verde', qtd: 2 },
+    { desc: 'Preta e Branca', qtd: 1 },
+    { desc: 'Branca e Preta', qtd: 1 },
+    { desc: 'Azul e Branca', qtd: 2 },
+    { desc: 'Branca e Azul', qtd: 1 },
+  ];
+
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  function formatBRL(n) {
+    return n.toFixed(2).replace('.', ',');
+  }
+
+  function addRow(desc = '', qtd = '', unit = '') {
+    const tbody = document.getElementById('tbody');
+    const idx = tbody.rows.length + 1;
+    const tr = document.createElement('tr');
+    const rowId = 'row_' + Date.now() + '_' + idx;
+    tr.id = rowId;
+    tr.innerHTML = `
+      <td style="color:#bbb;text-align:center;font-size:12px">${idx}</td>
+      <td class="foto-cell">
+        <input type="file" accept="image/*" class="foto-input" id="fi_${rowId}" onchange="previewFoto(this,'${rowId}')">
+        <div class="foto-placeholder" onclick="document.getElementById('fi_${rowId}').click()" id="ph_${rowId}">+</div>
+      </td>
+      <td><input type="text" class="desc" value="${escHtml(desc)}" placeholder="Descrição do item" oninput="calc()"></td>
+      <td><input type="number" class="qtd" value="${qtd}" min="0" oninput="calc()"></td>
+      <td><input type="number" class="unit" value="${unit}" min="0" step="0.01" placeholder="0,00" oninput="calc()"></td>
+      <td style="font-weight:bold;color:#1565c0;font-size:13px" class="tc">R$ 0,00</td>
+    `;
+    tbody.appendChild(tr);
+    renumberRows();
+    calc();
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  }
+
+  function renumberRows() {
+    document.querySelectorAll('#tbody tr').forEach((row, i) => {
+      row.cells[0].textContent = i + 1;
+    });
+  }
+
+  function previewFoto(input, rowId) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const ph = document.getElementById('ph_' + rowId);
+      ph.innerHTML = `<img src="${e.target.result}" class="foto-thumb" alt="foto" onclick="document.getElementById('fi_${rowId}').click()">`;
+      ph.style.border = 'none';
+      ph.style.width = '48px';
+      ph.style.height = '48px';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+
+  function removeRow() {
+    const tbody = document.getElementById('tbody');
+    if (tbody.rows.length > 1) {
+      tbody.deleteRow(-1);
+      renumberRows();
+      calc();
+    }
+  }
+
+  function calc() {
+    let tq = 0, tv = 0;
+    document.querySelectorAll('#tbody tr').forEach(row => {
+      const q = parseFloat(row.querySelector('.qtd').value) || 0;
+      const u = parseFloat(row.querySelector('.unit').value) || 0;
+      const t = q * u;
+      row.querySelector('.tc').textContent = 'R$ ' + formatBRL(t);
+      tq += q;
+      tv += t;
+    });
+    document.getElementById('totalQtd').textContent = tq;
+    document.getElementById('totalValor').textContent = formatBRL(tv);
+  }
+
+  function coletarDados() {
+    const itens = [];
+    document.querySelectorAll('#tbody tr').forEach(row => {
+      const ph = row.querySelector('.foto-placeholder img');
+      itens.push({
+        desc: row.querySelector('.desc').value,
+        qtd: row.querySelector('.qtd').value,
+        unit: row.querySelector('.unit').value,
+        foto: ph ? ph.src : null
+      });
+    });
+    return {
+      num: document.getElementById('num').value,
+      data: document.getElementById('data').value,
+      cliente: document.getElementById('cliente').value,
+      whatsapp: document.getElementById('whatsapp').value,
+      pedido: document.getElementById('pedido').value,
+      obs: document.getElementById('obs').value,
+      itens
+    };
+  }
+
+  function salvarRascunho() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(coletarDados()));
+    toast('Rascunho salvo neste navegador');
+  }
+
+  function carregarRascunho() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    try {
+      const d = JSON.parse(raw);
+      document.getElementById('num').value = d.num || '001';
+      document.getElementById('data').value = d.data || '';
+      document.getElementById('cliente').value = d.cliente || '';
+      document.getElementById('whatsapp').value = d.whatsapp || '';
+      document.getElementById('pedido').value = d.pedido || '';
+      document.getElementById('obs').value = d.obs || '';
+      document.getElementById('tbody').innerHTML = '';
+      (d.itens || []).forEach(item => {
+        addRow(item.desc, item.qtd, item.unit);
+        if (item.foto) {
+          const rows = document.querySelectorAll('#tbody tr');
+          const row = rows[rows.length - 1];
+          const rowId = row.id;
+          const ph = document.getElementById('ph_' + rowId);
+          if (ph) {
+            ph.innerHTML = `<img src="${item.foto}" class="foto-thumb" alt="foto" onclick="document.getElementById('fi_${rowId}').click()">`;
+            ph.style.border = 'none';
+          }
+        }
+      });
+      calc();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function formatarDataBR(iso) {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  function enviarWhatsApp() {
+    const num = document.getElementById('num').value;
+    const cliente = document.getElementById('cliente').value || 'Cliente';
+    const data = formatarDataBR(document.getElementById('data').value);
+    const pedido = document.getElementById('pedido').value;
+    const obs = document.getElementById('obs').value;
+    const total = document.getElementById('totalValor').textContent;
+
+    let msg = `*Taldo Studio 3D* — Orçamento Nº ${num}\n`;
+    if (data) msg += `Data: ${data}\n`;
+    msg += `Cliente: ${cliente}\n`;
+    if (pedido) msg += `Pedido: ${pedido}\n`;
+    msg += `\n*Itens:*\n`;
+
+    document.querySelectorAll('#tbody tr').forEach((row, i) => {
+      const desc = row.querySelector('.desc').value || '—';
+      const q = row.querySelector('.qtd').value || '0';
+      const u = parseFloat(row.querySelector('.unit').value) || 0;
+      const t = (parseFloat(q) || 0) * u;
+      msg += `${i + 1}. ${desc} — ${q}x R$ ${formatBRL(u)} = R$ ${formatBRL(t)}\n`;
+    });
+
+    msg += `\n*Total: R$ ${total}*\n`;
+    if (obs) msg += `\n_Obs: ${obs}_\n`;
+    msg += `\nAv. Sebastião Henriques, 575\n@TaldoStudio3d`;
+
+    const tel = (document.getElementById('whatsapp').value || '').replace(/\D/g, '');
+    const url = tel
+      ? `https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+
+    window.open(url, '_blank');
+  }
+
+  if (!carregarRascunho()) {
+    itensIniciais.forEach(i => addRow(i.desc, i.qtd));
+  }
+</script>
+</body>
+</html>
