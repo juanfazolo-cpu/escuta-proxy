@@ -40,7 +40,15 @@
   .foto-placeholder:hover { border-color: #1565c0; color: #1565c0; }
   .foto-input { display: none; }
 
-  .totals { display: flex; justify-content: flex-end; gap: 30px; font-size: 14px; font-weight: bold; color: #1565c0; margin-bottom: 20px; background: #f0f4ff; padding: 12px 16px; border-radius: 8px; flex-wrap: wrap; }
+  .totals { margin-bottom: 20px; background: #f0f4ff; padding: 12px 16px; border-radius: 8px; }
+  .totals-row { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 5px 0; font-size: 14px; color: #1565c0; }
+  .totals-row label { font-size: 13px; font-weight: bold; min-width: 140px; text-align: right; }
+  .totals-row .valor { font-weight: bold; min-width: 110px; text-align: right; }
+  .totals-row input { width: 90px; padding: 5px 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; text-align: right; color: #1565c0; font-weight: bold; }
+  .totals-row input:focus { outline: 2px solid #1565c0; border-color: transparent; }
+  .totals-row.final { margin-top: 6px; padding-top: 10px; border-top: 2px solid #1565c0; font-size: 16px; }
+  .totals-row.final label, .totals-row.final .valor { color: #0d47a1; font-size: 16px; }
+  .totals-row.desconto input { color: #e74c3c; }
 
   .obs-label { font-size: 10px; color: #888; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
   textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; resize: vertical; font-family: Arial, sans-serif; }
@@ -66,6 +74,7 @@
     .buttons { display: none; }
     .foto-placeholder { display: none; }
     tbody td input { pointer-events: none; }
+    .totals-row input { pointer-events: none; border: none; background: transparent; }
     .toast { display: none; }
   }
 </style>
@@ -123,8 +132,26 @@
   </table>
 
   <div class="totals">
-    <span>Total de Itens: <span id="totalQtd">0</span></span>
-    <span>Valor Total: R$ <span id="totalValor">0,00</span></span>
+    <div class="totals-row">
+      <label>Total de Itens:</label>
+      <span class="valor" id="totalQtd">0</span>
+    </div>
+    <div class="totals-row desconto">
+      <label>Desconto (R$):</label>
+      <input type="number" id="descontoReais" min="0" step="0.01" value="0" placeholder="0,00" oninput="calc()">
+    </div>
+    <div class="totals-row">
+      <label>Valor Total:</label>
+      <span class="valor">R$ <span id="totalValor">0,00</span></span>
+    </div>
+    <div class="totals-row desconto">
+      <label>Desconto (%):</label>
+      <input type="number" id="descontoPct" min="0" max="100" step="0.01" value="0" placeholder="0" oninput="calc()">
+    </div>
+    <div class="totals-row final">
+      <label>Valor Final:</label>
+      <span class="valor">R$ <span id="valorFinal">0,00</span></span>
+    </div>
   </div>
 
   <label class="obs-label">Observações</label>
@@ -234,6 +261,12 @@
     });
     document.getElementById('totalQtd').textContent = tq;
     document.getElementById('totalValor').textContent = formatBRL(tv);
+
+    const descReais = parseFloat(document.getElementById('descontoReais').value) || 0;
+    const descPct = parseFloat(document.getElementById('descontoPct').value) || 0;
+    const aposReais = Math.max(0, tv - descReais);
+    const final = Math.max(0, aposReais * (1 - descPct / 100));
+    document.getElementById('valorFinal').textContent = formatBRL(final);
   }
 
   function coletarDados() {
@@ -254,6 +287,8 @@
       whatsapp: document.getElementById('whatsapp').value,
       pedido: document.getElementById('pedido').value,
       obs: document.getElementById('obs').value,
+      descontoReais: document.getElementById('descontoReais').value,
+      descontoPct: document.getElementById('descontoPct').value,
       itens
     };
   }
@@ -274,6 +309,8 @@
       document.getElementById('whatsapp').value = d.whatsapp || '';
       document.getElementById('pedido').value = d.pedido || '';
       document.getElementById('obs').value = d.obs || '';
+      document.getElementById('descontoReais').value = d.descontoReais || '0';
+      document.getElementById('descontoPct').value = d.descontoPct || '0';
       document.getElementById('tbody').innerHTML = '';
       (d.itens || []).forEach(item => {
         addRow(item.desc, item.qtd, item.unit);
@@ -308,6 +345,9 @@
     const pedido = document.getElementById('pedido').value;
     const obs = document.getElementById('obs').value;
     const total = document.getElementById('totalValor').textContent;
+    const descReais = parseFloat(document.getElementById('descontoReais').value) || 0;
+    const descPct = parseFloat(document.getElementById('descontoPct').value) || 0;
+    const final = document.getElementById('valorFinal').textContent;
 
     let msg = `*Taldo Studio 3D* — Orçamento Nº ${num}\n`;
     if (data) msg += `Data: ${data}\n`;
@@ -323,7 +363,10 @@
       msg += `${i + 1}. ${desc} — ${q}x R$ ${formatBRL(u)} = R$ ${formatBRL(t)}\n`;
     });
 
-    msg += `\n*Total: R$ ${total}*\n`;
+    msg += `\n*Subtotal: R$ ${total}*`;
+    if (descReais > 0) msg += `\nDesconto: - R$ ${formatBRL(descReais)}`;
+    if (descPct > 0) msg += `\nDesconto: ${formatBRL(descPct)}%`;
+    msg += `\n*Valor Final: R$ ${final}*\n`;
     if (obs) msg += `\n_Obs: ${obs}_\n`;
     msg += `\nAv. Sebastião Henriques, 575\n@TaldoStudio3d`;
 
