@@ -1,0 +1,27 @@
+ROMANEIO TALDO STUDIO 3D — COMO USAR NO SEU COMPUTADOR
+======================================================
+
+1) Baixe a pasta "romaneio" para o seu PC
+   (pode baixar o ZIP do GitHub ou copiar a pasta inteira)
+
+2) WINDOWS (mais fácil):
+   - Abra a pasta romaneio
+   - Clique duas vezes em: iniciar.bat
+   - O navegador abre em http://localhost:3000
+   - Para encerrar: feche a janela preta do terminal
+
+3) MAC / LINUX:
+   - Abra o Terminal na pasta romaneio
+   - Digite: ./iniciar.sh
+   - Abra http://localhost:3000 no navegador
+
+4) SEM INSTALAR NADA:
+   - Clique duas vezes em index.html
+   - O romaneio abre direto no navegador
+   - Funciona para preencher, salvar rascunho, imprimir PDF e WhatsApp
+
+DICA: crie um atalho do iniciar.bat na área de trabalho
+para abrir o orçamento sempre que precisar.
+
+Requisito do iniciar.bat / iniciar.sh: Python instalado
+(https://www.python.org/downloads/ — marque "Add to PATH").
