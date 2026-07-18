@@ -1,0 +1,9 @@
+{
+  "name": "romaneio-taldo-studio",
+  "version": "1.0.0",
+  "description": "Romaneio / orçamento – Taldo Studio 3D",
+  "scripts": {
+    "start": "npx --yes serve -l 3000 .",
+    "dev": "python3 -m http.server 3000"
+  }
+}
